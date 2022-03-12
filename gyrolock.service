@@ -3,7 +3,7 @@ Description=Lock if laptop is move
 ConditionPathIsDirectory=/sys/bus/iio
 
 [Service]
-ExecStart=gyrolock
+ExecStart=/usr/bin/gyrolock
 # Environment="SENSITIVITY=100"
 
 # Lockdown
