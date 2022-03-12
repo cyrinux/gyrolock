@@ -1,0 +1,20 @@
+[Unit]
+Description=Lock if laptop is move
+ConditionPathIsDirectory=/sys/bus/iio
+
+[Service]
+ExecStart=gyrolock
+# Environment="SENSITIVITY=100"
+
+# Lockdown
+ProtectSystem=strict
+ProtectControlGroups=true
+ProtectHome=true
+ProtectKernelModules=true
+PrivateTmp=true
+RestrictAddressFamilies=AF_UNIX
+MemoryDenyWriteExecute=true
+RestrictRealtime=true
+
+[Install]
+WantedBy=basic.target

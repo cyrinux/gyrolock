@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -83,14 +84,22 @@ func ReadSensor(device int, axis string) int64 {
 	var value int64
 	var scale float64
 	for {
-		content, err := ioutil.ReadFile(fmt.Sprintf("/sys/bus/iio/devices/iio:device%d/in_accel_%s_raw", device, axis))
+		fp, err := filepath.Glob(fmt.Sprintf("/sys/bus/iio/devices/iio:device*/in_accel_%s_raw", axis))
 		if err != nil {
-			log.Fatalf("Can't read sensor %s", axis)
+			log.Fatal("Can't get file")
+		}
+		content, err := ioutil.ReadFile(fp[0])
+		if err != nil {
+			log.Fatalf("Can't read sensor value of axis %s", axis)
 		}
 		value, _ = strconv.ParseInt(strings.TrimSpace(string(content)), 0, 64)
-		content, err = ioutil.ReadFile(fmt.Sprintf("/sys/bus/iio/devices/iio:device%d/in_accel_scale", device))
+		fp, err = filepath.Glob("/sys/bus/iio/devices/iio:device*/in_accel_scale")
 		if err != nil {
-			log.Fatalf("Can't read sensor")
+			log.Fatal("Can't get file")
+		}
+		content, err = ioutil.ReadFile(fp[0])
+		if err != nil {
+			log.Fatalf("Can't read sensor scale value")
 		}
 		scale, _ = strconv.ParseFloat(strings.TrimSpace(string(content)), 64)
 		if value != 0 {
@@ -108,7 +117,7 @@ func LockSession(debug bool) {
 		os.Exit(1)
 	}
 	if !debug {
-		conn.LockSession("1")
+		conn.LockSessions()
 	}
 	log.Println("Lock !")
 }
