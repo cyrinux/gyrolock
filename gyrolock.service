@@ -1,11 +1,11 @@
 [Unit]
-Description=Lock if laptop is move
+Description=Lock sessions if laptop is shake
 ConditionPathIsDirectory=/sys/bus/iio
 
 [Service]
 ExecStart=/usr/bin/gyrolock
 Restart=always
-# Environment="SENSITIVITY=100"
+# Environment="SENSITIVITY=5"
 
 # Lockdown
 ProtectSystem=strict
