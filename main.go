@@ -55,9 +55,9 @@ func New() *Sensor {
 
 // Get the values of the sensor
 func (s *Sensor) Get(debug bool) {
-	s.X = ReadSensor(1, "x")
-	s.Y = ReadSensor(1, "y")
-	s.Z = ReadSensor(1, "z")
+	s.X = ReadSensor("x")
+	s.Y = ReadSensor("y")
+	s.Z = ReadSensor("z")
 	if debug {
 		log.Printf("x:%v y:%v z:%v\n", s.X, s.Y, s.Z)
 	}
@@ -65,9 +65,9 @@ func (s *Sensor) Get(debug bool) {
 
 // Calibrate the sensor
 func (s *Sensor) Calibrate(debug bool) {
-	s.InitX = ReadSensor(1, "x")
-	s.InitY = ReadSensor(1, "y")
-	s.InitZ = ReadSensor(1, "z")
+	s.InitX = ReadSensor("x")
+	s.InitY = ReadSensor("y")
+	s.InitZ = ReadSensor("z")
 	if debug {
 		log.Printf("init: x:%v y:%v z:%v\n", s.InitX, s.InitY, s.InitZ)
 	}
@@ -80,7 +80,7 @@ func (s *Sensor) CheckShake(sensitivity int64) bool {
 }
 
 // ReadSensor read sensor value as absolute value
-func ReadSensor(device int, axis string) int64 {
+func ReadSensor(axis string) int64 {
 	var value int64
 	var scale float64
 	for {
