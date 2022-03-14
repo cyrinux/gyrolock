@@ -4,6 +4,10 @@ Lock systemd sessions when the laptop is shake, move.
 
 Tested on a Dell Latitude 7420.
 
+## Install
+
+Available as archlinux AUR package `gyrolock`.
+
 ## Setting
 
 Sensitivity can be set in an systemd unit override with `SENSITIVITY` env var.
