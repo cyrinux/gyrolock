@@ -16,12 +16,8 @@ import (
 
 // Sensor is a iio accelerometer struct
 type Sensor struct {
-	X     float64
-	Y     float64
-	Z     float64
-	prevX float64
-	prevY float64
-	prevZ float64
+	axis  map[string]float64
+	scale float64
 	debug bool
 }
 
@@ -32,12 +28,13 @@ func main() {
 		sensitivity = 5
 	}
 	log.Printf("GyroLock start with sensitivy = %d", sensitivity)
-	s := New(debug)
+	prev := New(debug)
+	cur := New(debug)
 	for {
-		s.Calibrate()
+		prev.Get()
 		time.Sleep(200 * time.Millisecond)
-		s.Get()
-		if s.CheckShake(sensitivity) {
+		cur.Get()
+		if CheckShake(sensitivity, cur, prev, debug) {
 			LockSessions(debug)
 			if !debug {
 				time.Sleep(60 * time.Second)
@@ -48,39 +45,13 @@ func main() {
 	}
 }
 
-// New create a new sensor
-func New(debug bool) *Sensor {
-	s := Sensor{debug: debug}
-	return &s
-}
-
-// Get the values of the sensor
-func (s *Sensor) Get() {
-	s.X = ReadSensor("x")
-	s.Y = ReadSensor("y")
-	s.Z = ReadSensor("z")
-	if s.debug {
-		log.Printf("current: x:%v y:%v z:%v\n", s.X, s.Y, s.Z)
-	}
-}
-
-// Calibrate the sensor
-func (s *Sensor) Calibrate() {
-	s.prevX = ReadSensor("x")
-	s.prevY = ReadSensor("y")
-	s.prevZ = ReadSensor("z")
-	if s.debug {
-		log.Printf("previous: x:%v y:%v z:%v\n", s.prevX, s.prevY, s.prevZ)
-	}
-}
-
 // CheckShake check if sensor was shake
-func (s *Sensor) CheckShake(sensitivity int64) bool {
-	diffX := int64(math.Abs(s.X - s.prevX))
-	diffY := int64(math.Abs(s.Y - s.prevY))
-	diffZ := int64(math.Abs(s.Z - s.prevZ))
+func CheckShake(sensitivity int64, cur *Sensor, prev *Sensor, debug bool) bool {
+	diffX := int64(math.Abs(cur.axis["x"] - prev.axis["x"]))
+	diffY := int64(math.Abs(cur.axis["y"] - prev.axis["y"]))
+	diffZ := int64(math.Abs(cur.axis["z"] - prev.axis["z"]))
 	shake := diffX > sensitivity || diffY > sensitivity || diffZ > sensitivity
-	if s.debug {
+	if debug {
 		log.Printf("diff: diffX:%v, diffY:%v, diffZ:%v", diffX, diffY, diffZ)
 	}
 	if shake {
@@ -89,10 +60,42 @@ func (s *Sensor) CheckShake(sensitivity int64) bool {
 	return shake
 }
 
+// New create a new sensor
+func New(debug bool) *Sensor {
+	axis := make(map[string]float64)
+	s := Sensor{debug: debug, axis: axis}
+	s.ReadSensorScale()
+	s.Get()
+	return &s
+}
+
+// Get the values of the sensor
+func (s *Sensor) Get() {
+	x := s.ReadSensor("x")
+	y := s.ReadSensor("y")
+	z := s.ReadSensor("z")
+	if s.debug {
+		log.Printf("current: x:%v y:%v z:%v\n", x, y, z)
+	}
+}
+
+// ReadSensorScale read sensor scale value
+func (s *Sensor) ReadSensorScale() {
+	fp, err := filepath.Glob("/sys/bus/iio/devices/iio:device*/in_accel_scale")
+	if err != nil {
+		log.Fatal("Can't get file")
+	}
+	content, err := ioutil.ReadFile(fp[0])
+	if err != nil {
+		log.Fatalf("Can't read sensor scale value")
+	}
+	scale, _ := strconv.ParseFloat(strings.TrimSpace(string(content)), 64)
+	s.scale = float64(scale)
+}
+
 // ReadSensor read sensor value as absolute value
-func ReadSensor(axis string) float64 {
+func (s *Sensor) ReadSensor(axis string) float64 {
 	var value int64
-	var scale float64
 	for {
 		fp, err := filepath.Glob(
 			fmt.Sprintf("/sys/bus/iio/devices/iio:device*/in_accel_%s_raw", axis),
@@ -105,21 +108,15 @@ func ReadSensor(axis string) float64 {
 			log.Fatalf("Can't read sensor value of axis %s", axis)
 		}
 		value, _ = strconv.ParseInt(strings.TrimSpace(string(content)), 0, 64)
-		fp, err = filepath.Glob("/sys/bus/iio/devices/iio:device*/in_accel_scale")
-		if err != nil {
-			log.Fatal("Can't get file")
-		}
-		content, err = ioutil.ReadFile(fp[0])
-		if err != nil {
-			log.Fatalf("Can't read sensor scale value")
-		}
-		scale, _ = strconv.ParseFloat(strings.TrimSpace(string(content)), 64)
 		if value != 0 {
 			break
 		}
-		time.Sleep(15 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}
-	return float64(math.Abs(float64(value)) * scale)
+
+	result := float64(math.Abs(float64(value)) * s.scale)
+	s.axis[axis] = result
+	return result
 }
 
 // LockSessions lock the current session

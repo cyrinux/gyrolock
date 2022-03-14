@@ -46,12 +46,12 @@ dist: clean vendor build
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
 
 	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	cp LICENSE.md $(BIN).service "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	cp LICENSE.md $(BIN) $(BIN).service "$(TMP)/$(BIN)-$(VERSION)-linux64"
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
 
 	mkdir -p dist
 	mv "$(TMP)/$(BIN)-$(VERSION)"-*.tar.gz dist
-	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "$(VERSION)"
+	git archive -o "dist/$(BIN)-$(VERSION).tar.gz" --format tar.gz --prefix "$(BIN)-$(VERSION)/" "v$(VERSION)"
 
 	for file in dist/*; do \
 	    gpg --detach-sign --armor "$$file"; \
