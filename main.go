@@ -14,7 +14,7 @@ import (
 	"github.com/coreos/go-systemd/login1"
 )
 
-// Sensor is a iio accelerometer struct
+// Sensor is a IIO accelerometer struct
 type Sensor struct {
 	axis  map[string]float64
 	scale float64
@@ -25,9 +25,9 @@ func main() {
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	sensitivity, err := strconv.ParseInt(os.Getenv("SENSITIVITY"), 0, 16)
 	if err != nil || sensitivity < 0 {
-		sensitivity = 5
+		sensitivity = 10
 	}
-	log.Printf("GyroLock start with sensitivy = %d", sensitivity)
+	log.Printf("GyroLock start with sensitivity = %d", sensitivity)
 	prev := New(debug)
 	cur := New(debug)
 	for {
@@ -75,7 +75,7 @@ func (s *Sensor) Get() {
 	y := s.ReadSensor("y")
 	z := s.ReadSensor("z")
 	if s.debug {
-		log.Printf("current: x:%v y:%v z:%v\n", x, y, z)
+		log.Printf("current: x:%v y:%v z:%v", x, y, z)
 	}
 }
 
@@ -83,14 +83,17 @@ func (s *Sensor) Get() {
 func (s *Sensor) ReadSensorScale() {
 	fp, err := filepath.Glob("/sys/bus/iio/devices/iio:device*/in_accel_scale")
 	if err != nil {
-		log.Fatal("Can't get file")
+		log.Fatal("Can't get file in_accel_scale")
 	}
 	content, err := ioutil.ReadFile(fp[0])
 	if err != nil {
-		log.Fatalf("Can't read sensor scale value")
+		log.Fatalf("Can't read sensor scale value from in_accel_scale")
 	}
-	scale, _ := strconv.ParseFloat(strings.TrimSpace(string(content)), 64)
-	s.scale = float64(scale)
+	scale, err := strconv.ParseFloat(strings.TrimSpace(string(content)), 64)
+	if err != nil {
+		scale = 1
+	}
+	s.scale = scale
 }
 
 // ReadSensor read sensor value as absolute value
@@ -101,14 +104,14 @@ func (s *Sensor) ReadSensor(axis string) float64 {
 			fmt.Sprintf("/sys/bus/iio/devices/iio:device*/in_accel_%s_raw", axis),
 		)
 		if err != nil {
-			log.Fatal("Can't get file")
+			log.Fatalf("Can't get file in_accel_%s_raw", axis)
 		}
 		content, err := ioutil.ReadFile(fp[0])
 		if err != nil {
-			log.Fatalf("Can't read sensor value of axis %s", axis)
+			log.Fatalf("Can't read sensor value from in_accel_%s_raw", axis)
 		}
-		value, _ = strconv.ParseInt(strings.TrimSpace(string(content)), 0, 64)
-		if value != 0 {
+		value, err = strconv.ParseInt(strings.TrimSpace(string(content)), 0, 64)
+		if err == nil && value != 0 {
 			break
 		}
 		time.Sleep(10 * time.Millisecond)
