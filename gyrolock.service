@@ -5,7 +5,7 @@ ConditionPathIsDirectory=/sys/bus/iio
 [Service]
 ExecStart=/usr/bin/gyrolock
 Restart=always
-# Environment="SENSITIVITY=5"
+Environment="SENSITIVITY=10"
 
 # Lockdown
 ProtectSystem=strict

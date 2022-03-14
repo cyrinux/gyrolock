@@ -34,6 +34,9 @@ func main() {
 	log.Printf("GyroLock start with sensitivy = %d", sensitivity)
 	s := New(debug)
 	for {
+		s.Calibrate()
+		time.Sleep(200 * time.Millisecond)
+		s.Get()
 		if s.CheckShake(sensitivity) {
 			LockSessions(debug)
 			if !debug {
@@ -42,9 +45,6 @@ func main() {
 				time.Sleep(5 * time.Second)
 			}
 		}
-		s.Calibrate()
-		time.Sleep(100 * time.Millisecond)
-		s.Get()
 	}
 }
 
