@@ -1,6 +1,7 @@
 [Unit]
 Description=Lock sessions if laptop is shake
 ConditionPathIsDirectory=/sys/bus/iio
+After=systemd-udevd.service
 
 [Service]
 ExecStart=/usr/bin/gyrolock

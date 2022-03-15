@@ -26,6 +26,7 @@ install:
 	install -Dm755 -t "$(BIN_DIR)/" $(BIN)
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE.md
 	install -Dm644 -t "$(LIB_DIR)/systemd/system/" $(BIN).service
+	install -Dm644 -t "$(LIB_DIR)/systemd/user/" swaylock.service
 
 .PHONY: vendor
 vendor:

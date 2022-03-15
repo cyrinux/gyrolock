@@ -1,0 +1,12 @@
+[Unit]
+Description=Screen locker for Wayland
+OnSuccess=unlock.target
+PartOf=lock.target
+
+[Service]
+ExecStart=/usr/bin/swaylock
+Restart=on-failure
+RestartSec=0
+
+[Install]
+WantedBy=lock.target
