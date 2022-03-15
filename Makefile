@@ -47,7 +47,7 @@ dist: clean vendor build
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
 
 	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	cp LICENSE.md $(BIN) $(BIN).service "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	cp LICENSE.md $(BIN) $(BIN).service swaylock.service "$(TMP)/$(BIN)-$(VERSION)-linux64"
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
 
 	mkdir -p dist

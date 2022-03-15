@@ -6,7 +6,15 @@ Tested on a Dell Latitude 7420.
 
 ## Install
 
-Available as archlinux AUR package `gyrolock`.
+Available as archlinux AUR package `gyrolock`. This will install also `systemd-lock-handler` AUR package and `swaylock`.
+
+## Activate
+
+```
+sudo systemctl enable --now gyrolock.service
+systemctl --user enable --now systemd-lock-handler.service
+systemctl --user enable --now swaylock.service
+```
 
 ## Setting
 
