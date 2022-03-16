@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"os/user"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -35,7 +36,7 @@ func main() {
 		time.Sleep(200 * time.Millisecond)
 		cur.Get()
 		if CheckShake(sensitivity, cur, prev, debug) {
-			LockSessions(debug)
+			LockSessions(debug, "1")
 			if !debug {
 				time.Sleep(60 * time.Second)
 			} else {
@@ -123,15 +124,28 @@ func (s *Sensor) ReadSensor(axis string) float64 {
 }
 
 // LockSessions lock the current session
-func LockSessions(debug bool) {
+func LockSessions(debug bool, seat string) {
 	conn, err := login1.New()
 	if err != nil {
 		os.Exit(1)
 	}
 	if !debug {
-		conn.LockSessions()
-		log.Println("GyroLock lock seesions !")
+		if isRoot() {
+			conn.LockSessions()
+			log.Println("GyroLock lock sessions !")
+		} else {
+			conn.LockSession(seat)
+			log.Println("GyroLock lock session %v !", seat)
+		}
 	} else {
-		log.Println("GyroLock would lock seesions !")
+		log.Println("GyroLock would lock sessions !")
 	}
+}
+
+func isRoot() bool {
+	currentUser, err := user.Current()
+	if err != nil {
+		log.Fatalf("Unable to get current user: %s", err)
+	}
+	return currentUser.Username == "root"
 }
