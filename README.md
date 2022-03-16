@@ -16,10 +16,10 @@ systemctl --user enable --now systemd-lock-handler.service
 systemctl --user enable --now swaylock.service
 ```
 
-## Setting
+## Settings
 
 Sensitivity can be set in an systemd unit override with `SENSITIVITY` env var.
-Try our own value, default is 5.
+Try your own value, default is 5.
 
 ## Debug
 
