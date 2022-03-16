@@ -1,6 +1,8 @@
 # GyroLock
 
-Lock systemd sessions when the laptop is shake, move.
+![gyroscope](https://upload.wikimedia.org/wikipedia/commons/d/d5/Gyroscope_operation.gif)
+
+Lock systemd sessions when the laptop is shake or move fast based on [gyroscope](https://en.wikipedia.org/wiki/Gyroscope) values
 
 Tested on a Dell Latitude 7420.
 
