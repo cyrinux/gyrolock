@@ -23,6 +23,9 @@ type Sensor struct {
 }
 
 func main() {
+	if !isRoot() {
+		log.Println("It's recommanded to run it as root, running as user will be easy to disable !")
+	}
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	sensitivity, err := strconv.ParseInt(os.Getenv("SENSITIVITY"), 0, 16)
 	if err != nil || sensitivity < 0 {
@@ -135,7 +138,7 @@ func LockSessions(debug bool, seat string) {
 			log.Println("GyroLock lock sessions !")
 		} else {
 			conn.LockSession(seat)
-			log.Println("GyroLock lock session %v !", seat)
+			log.Printf("GyroLock lock session %v !", seat)
 		}
 	} else {
 		log.Println("GyroLock would lock sessions !")
