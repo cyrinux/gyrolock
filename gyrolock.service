@@ -1,11 +1,11 @@
 [Unit]
 Description=Lock sessions if laptop is shake
-ConditionPathIsDirectory=/sys/bus/iio
-After=systemd-udevd.service
 
 [Service]
+# Type=dbus
+# BusName=name.levis.GyroLock
 ExecStart=/usr/bin/gyrolock
-Restart=always
+Restart=on-failure
 Environment="SENSITIVITY=10"
 
 # Lockdown
@@ -17,6 +17,3 @@ PrivateTmp=true
 RestrictAddressFamilies=AF_UNIX
 MemoryDenyWriteExecute=true
 RestrictRealtime=true
-
-[Install]
-WantedBy=basic.target

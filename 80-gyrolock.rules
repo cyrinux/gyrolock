@@ -1,0 +1,18 @@
+# gyrolock
+# Lock sessions based on gyroscope IIO sensor
+
+ACTION=="remove", GOTO="iio_sensor_gyrolock_end"
+
+# Set the sensor type for all the types we recognise
+SUBSYSTEM=="iio", TEST=="in_accel_x_raw", TEST=="in_accel_y_raw", TEST=="in_accel_z_raw", ENV{IIO_SENSOR_GYROLOCK_TYPE}+="iio-poll-accel"
+SUBSYSTEM=="iio", TEST=="scan_elements/in_accel_x_en", TEST=="scan_elements/in_accel_y_en", TEST=="scan_elements/in_accel_z_en", ENV{IIO_SENSOR_GYROLOCK_TYPE}+="iio-buffer-accel"
+SUBSYSTEM=="iio", TEST=="scan_elements/in_rot_from_north_magnetic_tilt_comp_en", ENV{IIO_SENSOR_GYROLOCK_TYPE}+="iio-buffer-compass"
+SUBSYSTEM=="iio", TEST=="in_proximity_raw", ENV{IIO_SENSOR_GYROLOCK_TYPE}+="iio-poll-proximity"
+SUBSYSTEM=="input", ENV{ID_INPUT_ACCELEROMETER}=="1", ENV{IIO_SENSOR_GYROLOCK_TYPE}+="input-accel"
+
+ENV{IIO_SENSOR_GYROLOCK_TYPE}=="", GOTO="iio_sensor_gyrolock_end"
+
+# We got here because we have a sensor type, which means we need the service
+TAG+="systemd", ENV{SYSTEMD_WANTS}+="gyrolock.service"
+
+LABEL="iio_sensor_gyrolock_end"

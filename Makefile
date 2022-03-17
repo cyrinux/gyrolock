@@ -26,6 +26,7 @@ install:
 	install -Dm755 -t "$(BIN_DIR)/" $(BIN)
 	install -Dm644 -t "$(SHARE_DIR)/licenses/$(BIN)/" LICENSE.md
 	install -Dm644 -t "$(LIB_DIR)/systemd/system/" $(BIN).service
+	install -Dm644 -t "$(LIB_DIR)/udev/rules.d/" $(BIN).rules
 	install -Dm644 -t "$(LIB_DIR)/systemd/user/" swaylock.service
 
 .PHONY: vendor
@@ -47,7 +48,7 @@ dist: clean vendor build
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-src.tar.gz" "$(BIN)-$(VERSION)")
 
 	mkdir "$(TMP)/$(BIN)-$(VERSION)-linux64"
-	cp LICENSE.md $(BIN) $(BIN).service swaylock.service "$(TMP)/$(BIN)-$(VERSION)-linux64"
+	cp LICENSE.md $(BIN) $(BIN).service 80-$(BIN).rules swaylock.service "$(TMP)/$(BIN)-$(VERSION)-linux64"
 	(cd "$(TMP)" && tar -cvzf "$(BIN)-$(VERSION)-linux64.tar.gz" "$(BIN)-$(VERSION)-linux64")
 
 	mkdir -p dist
