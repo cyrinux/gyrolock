@@ -1,9 +1,8 @@
 [Unit]
 Description=Lock sessions if laptop is shake
+ConditionPathIsDirectory=/sys/bus/iio
 
 [Service]
-# Type=dbus
-# BusName=name.levis.GyroLock
 ExecStart=/usr/bin/gyrolock
 Restart=on-failure
 Environment="SENSITIVITY=10"

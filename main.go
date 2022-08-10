@@ -1,8 +1,8 @@
+// main GyroLock app
 package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
 	"os"
@@ -24,7 +24,7 @@ type Sensor struct {
 
 func main() {
 	if !isRoot() {
-		log.Println("It's recommanded to run it as root, running as user will be easy to disable !")
+		log.Println("It's recommanded to run it as root, if you run it as user will be easy to disable !")
 	}
 	debug, _ := strconv.ParseBool(os.Getenv("DEBUG"))
 	sensitivity, err := strconv.ParseInt(os.Getenv("SENSITIVITY"), 0, 16)
@@ -32,11 +32,9 @@ func main() {
 		sensitivity = 10
 	}
 	log.Printf("GyroLock start with sensitivity = %d", sensitivity)
-	prev := New(debug)
-	cur := New(debug)
+	prev := NewSensor(debug)
+	cur := NewSensor(debug)
 	for {
-		prev.Get()
-		time.Sleep(200 * time.Millisecond)
 		cur.Get()
 		if CheckShake(sensitivity, cur, prev, debug) {
 			LockSessions(debug, "1")
@@ -46,26 +44,32 @@ func main() {
 				time.Sleep(5 * time.Second)
 			}
 		}
+		prev.Get()
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
 // CheckShake check if sensor was shake
 func CheckShake(sensitivity int64, cur *Sensor, prev *Sensor, debug bool) bool {
-	diffX := int64(math.Abs(cur.axis["x"] - prev.axis["x"]))
-	diffY := int64(math.Abs(cur.axis["y"] - prev.axis["y"]))
-	diffZ := int64(math.Abs(cur.axis["z"] - prev.axis["z"]))
-	shake := diffX > sensitivity || diffY > sensitivity || diffZ > sensitivity
-	if debug {
-		log.Printf("diff: diffX:%v, diffY:%v, diffZ:%v", diffX, diffY, diffZ)
-	}
-	if shake {
-		log.Printf("GyroLock, shake detected: x:%v, y:%v, z:%v", diffX, diffY, diffZ)
+	axis := []string{"x", "y", "z"}
+	shake := false
+
+	for _, v := range axis {
+		ret := int64(math.Abs(cur.axis[v] - prev.axis[v]))
+		if debug {
+			log.Printf("diff: %v:%v", v, ret)
+		}
+		shake = ret > sensitivity
+		if shake {
+			log.Printf("GyroLock, shake detected: %v:%v", v, ret)
+			break
+		}
 	}
 	return shake
 }
 
-// New create a new sensor
-func New(debug bool) *Sensor {
+// NewSensor create a new sensor
+func NewSensor(debug bool) *Sensor {
 	axis := make(map[string]float64)
 	s := Sensor{debug: debug, axis: axis}
 	s.ReadSensorScale()
@@ -75,21 +79,22 @@ func New(debug bool) *Sensor {
 
 // Get the values of the sensor
 func (s *Sensor) Get() {
-	x := s.ReadSensor("x")
-	y := s.ReadSensor("y")
-	z := s.ReadSensor("z")
-	if s.debug {
-		log.Printf("current: x:%v y:%v z:%v", x, y, z)
+	axis := []string{"x", "y", "z"}
+	for _, v := range axis {
+		ret := s.ReadSensor(v)
+		if s.debug {
+			log.Printf("current: %s:%v", v, ret)
+		}
 	}
 }
 
 // ReadSensorScale read sensor scale value
 func (s *Sensor) ReadSensorScale() {
 	fp, err := filepath.Glob("/sys/bus/iio/devices/iio:device*/in_accel_scale")
-	if err != nil {
+	if err != nil || len(fp) == 0 {
 		log.Fatal("Can't get file in_accel_scale")
 	}
-	content, err := ioutil.ReadFile(fp[0])
+	content, err := os.ReadFile(fp[0])
 	if err != nil {
 		log.Fatalf("Can't read sensor scale value from in_accel_scale")
 	}
@@ -107,10 +112,10 @@ func (s *Sensor) ReadSensor(axis string) float64 {
 		fp, err := filepath.Glob(
 			fmt.Sprintf("/sys/bus/iio/devices/iio:device*/in_accel_%s_raw", axis),
 		)
-		if err != nil {
+		if err != nil || len(fp) == 0 {
 			log.Fatalf("Can't get file in_accel_%s_raw", axis)
 		}
-		content, err := ioutil.ReadFile(fp[0])
+		content, err := os.ReadFile(fp[0])
 		if err != nil {
 			log.Fatalf("Can't read sensor value from in_accel_%s_raw", axis)
 		}
@@ -123,6 +128,7 @@ func (s *Sensor) ReadSensor(axis string) float64 {
 
 	result := float64(math.Abs(float64(value)) * s.scale)
 	s.axis[axis] = result
+
 	return result
 }
 
