@@ -15,10 +15,13 @@ import (
 	"github.com/coreos/go-systemd/login1"
 )
 
+var AXIS = []string{"x_raw", "y_raw", "z_raw", "scale"}
+
 // Sensor is a IIO accelerometer struct
 type Sensor struct {
 	axisValues     map[string]float64
 	prevAxisValues map[string]float64
+	diffValues     map[string]int64
 	axisPaths      map[string]string
 	scale          float64
 	debug          bool
@@ -59,28 +62,39 @@ func main() {
 }
 
 func (s *Sensor) savePrevious() {
-	axis := []string{"x_raw", "y_raw", "z_raw"}
-	for _, v := range axis {
+	for _, v := range AXIS {
 		s.prevAxisValues[v] = s.axisValues[v]
 	}
 }
 
 // CheckShake check if sensor was shake
 func (s *Sensor) CheckShake(sensitivity int64, debug bool) bool {
-	axis := []string{"x_raw", "y_raw", "z_raw"}
 	shake := false
+	triggered := ""
 
-	for _, v := range axis {
-		ret := int64(math.Abs(s.prevAxisValues[v] - s.axisValues[v]))
-		if debug {
-			log.Printf("diff: %v:%v", v, ret)
+	s.diffValues = make(map[string]int64)
+
+	for _, v := range AXIS {
+		if v == "scale" {
+			continue
 		}
-		shake = ret > sensitivity
+		diff := int64(math.Abs(s.prevAxisValues[v] - s.axisValues[v]))
+		s.diffValues[v] = diff
+		shake = diff > sensitivity
 		if shake {
-			log.Printf("GyroLock, shake detected: %v:%v", v, ret)
+			triggered = v
 			break
 		}
 	}
+
+	if debug {
+		log.Printf("diff: %v\n", s.diffValues)
+	}
+
+	if shake {
+		log.Printf("GyroLock, shake detected on %v axis: %v", triggered, s.diffValues)
+	}
+
 	return shake
 }
 
@@ -88,21 +102,34 @@ func (s *Sensor) CheckShake(sensitivity int64, debug bool) bool {
 func NewSensor(debug bool) *Sensor {
 	axisValues := make(map[string]float64)
 	prevAxisValues := make(map[string]float64)
+	diffValues := make(map[string]int64)
 	axisPaths := make(map[string]string)
-	axis := []string{"x_raw", "y_raw", "z_raw", "scale"}
-	for _, v := range axis {
+
+	for _, v := range AXIS {
 		axisPaths[v] = getSensorPath(fmt.Sprintf("in_accel_%s", v))
 	}
-	s := Sensor{debug: debug, axisValues: axisValues, prevAxisValues: prevAxisValues, axisPaths: axisPaths}
-	s.ReadSensorScale()
+
+	s := Sensor{
+		debug:          debug,
+		axisValues:     axisValues,
+		prevAxisValues: prevAxisValues,
+		axisPaths:      axisPaths,
+		diffValues:     diffValues,
+	}
+
+	s.Get()
+
 	return &s
 }
 
 // Get the values of the sensor
 func (s *Sensor) Get() {
-	axis := []string{"x_raw", "y_raw", "z_raw"}
-	for _, v := range axis {
-		s.ReadSensor(v)
+	for _, axis := range AXIS {
+		if axis == "scale" {
+			s.ReadSensorScale()
+		} else {
+			s.ReadSensor(axis)
+		}
 	}
 }
 
