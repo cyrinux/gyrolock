@@ -24,6 +24,7 @@ type Sensor struct {
 	diffValues     map[string]int64
 	axisPaths      map[string]string
 	scale          float64
+	moving         bool
 	debug          bool
 }
 
@@ -57,13 +58,17 @@ func main() {
 			log.Printf("previous: %v", s.prevAxisValues)
 		}
 
-		time.Sleep(200 * time.Millisecond)
+		if s.moving {
+			time.Sleep(200 * time.Millisecond)
+		} else {
+			time.Sleep(1000 * time.Millisecond)
+		}
 	}
 }
 
 func (s *Sensor) savePrevious() {
-	for _, v := range AXIS {
-		s.prevAxisValues[v] = s.axisValues[v]
+	for _, axis := range AXIS {
+		s.prevAxisValues[axis] = s.axisValues[axis]
 	}
 }
 
@@ -74,15 +79,17 @@ func (s *Sensor) CheckShake(sensitivity int64, debug bool) bool {
 
 	s.diffValues = make(map[string]int64)
 
-	for _, v := range AXIS {
-		if v == "scale" {
+	for _, axis := range AXIS {
+		if axis == "scale" {
 			continue
 		}
-		diff := int64(math.Abs(s.prevAxisValues[v] - s.axisValues[v]))
-		s.diffValues[v] = diff
+		diff := int64(math.Abs(s.prevAxisValues[axis] - s.axisValues[axis]))
+		s.diffValues[axis] = diff
+		s.moving = diff > 0
 		shake = diff > sensitivity
+
 		if shake {
-			triggered = v
+			triggered = axis
 			break
 		}
 	}
@@ -115,6 +122,7 @@ func NewSensor(debug bool) *Sensor {
 		prevAxisValues: prevAxisValues,
 		axisPaths:      axisPaths,
 		diffValues:     diffValues,
+		moving:         false,
 	}
 
 	s.Get()
